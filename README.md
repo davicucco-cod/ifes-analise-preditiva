@@ -78,19 +78,12 @@ Interface web interativa que:
 
 ```
 📦 ifes-analise-preditiva
- ┣ 📂 dados
- ┃ ┗ PDFs brutos e CSV final gerado
-
- ┣ 📂 notebooks
- ┃ ┗ microdados_ifes.ipynb
- ┃   Scripts de extração e tratamento (ETL)
-
- ┣ 📂 app
- ┃ ┗ index.html
- ┃   Aplicação Web (Single Page Application)
-
- ┗ README.md
-   Documentação do projeto
+ ┣ README.md
+ ┃  Documentação do projeto
+ ┣ microdados_ifes.ipynb
+ ┃  Scripts de extração e tratamento (ETL)
+ ┗ index.html
+    Aplicação Web (Single Page Application)
 ```
 
 ---
@@ -105,13 +98,13 @@ A aplicação é **100% serverless**, não sendo necessário servidor local.
 git clone https://github.com/SEU_USUARIO/ifes-analise-preditiva.git
 ```
 
-## 2. Acesse a pasta da aplicação
+## 2. Acesse a pasta do projeto
 
 ```bash
-cd ifes-analise-preditiva/app
+cd ifes-analise-preditiva
 ```
 
-## 3. Abra o arquivo no navegador
+## 3. Abra o simulador no navegador
 
 Abra o arquivo **index.html** em qualquer navegador moderno:
 
