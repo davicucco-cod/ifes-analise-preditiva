@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IFES - Projeção de Nota de Corte</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f3f4f6; }
+        /* Estilo para a barra de rolagem das listas da matriz */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+        .dark-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
+    </style>
+</head>
+<body class="text-slate-800 relative min-h-screen">
+
+    <nav class="bg-blue-900 text-white shadow-md relative z-20">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i data-lucide="bar-chart-2" class="w-8 h-8"></i>
+                <h1 class="text-2xl font-bold tracking-tight">Projeção IFES <span class="text-blue-300 font-normal">2026</span></h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <span id="db-status" class="flex items-center gap-2 text-xs font-semibold bg-blue-800 px-3 py-1 rounded-full border border-blue-700">
+                    <span class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" id="db-status-dot"></span>
+                    <span id="db-status-text">A conectar ao Banco de Dados...</span>
+                </span>
+                <a href="#matriz-estrategica" class="hidden md:flex items-center gap-2 text-sm font-semibold text-blue-200 hover:text-white transition-colors">
+                    <i data-lucide="grid" class="w-4 h-4"></i> Ver Matriz
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 py-8 space-y-12">
+        
+        <!-- Tela de Carregamento (Substitui o Upload de CSV) -->
+        <div id="loadingSection" class="bg-white rounded-xl shadow-lg p-16 text-center border border-slate-200 flex flex-col items-center justify-center">
+            <i data-lucide="database" class="w-16 h-16 text-blue-500 mb-6 animate-bounce"></i>
+            <h2 class="text-3xl font-bold mb-2 text-slate-800">Sincronizando Dados Oficiais</h2>
+            <p class="text-slate-500 text-lg">A importar o histórico de notas de corte do Supabase...</p>
+        </div>
+
+        <!-- DASHBOARD PRINCIPAL -->
+        <div id="dashboardSection" class="hidden space-y-12">
+            
+            <!-- SECÇÃO 1: REGRESSÃO LINEAR -->
+            <div class="space-y-6">
+                <!-- FILTROS -->
+                <div class="bg-white rounded-xl shadow p-6 border border-slate-200 flex flex-col md:flex-row gap-4">
+                    <div class="flex-1">
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Campus</label>
+                        <select id="campusSelect" class="w-full border border-slate-300 rounded-lg p-3 bg-slate-50 font-medium outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                            <option value="">Selecione...</option>
+                        </select>
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Curso</label>
+                        <select id="cursoSelect" class="w-full border border-slate-300 rounded-lg p-3 bg-slate-50 font-medium outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                            <option value="">Aguardando campus...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="resultadosContainer" class="hidden space-y-6">
+                    <div class="bg-white rounded-xl shadow p-6 border border-slate-200 text-center">
+                        <h2 id="tituloAnalise" class="text-2xl font-bold text-slate-800">Projeção para ...</h2>
+                    </div>
+
+                    <!-- KPIs -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-white rounded-xl shadow p-6 border border-slate-200 text-center flex flex-col justify-center">
+                            <p class="text-sm font-bold text-slate-500 uppercase flex items-center justify-center gap-1">
+                                <i data-lucide="target" class="w-4 h-4"></i> Previsão 2026
+                            </p>
+                            <h3 id="kpiPrevisao" class="text-5xl font-black text-blue-600 my-3">--</h3>
+                            <p class="text-sm text-slate-500">Pontos projetados</p>
+                        </div>
+                        <div class="bg-white rounded-xl shadow p-6 border border-green-200 bg-green-50 text-center flex flex-col justify-center">
+                            <p class="text-sm font-bold text-green-700 uppercase flex items-center justify-center gap-1">
+                                <i data-lucide="arrow-down-circle" class="w-4 h-4"></i> Cenário Otimista
+                            </p>
+                            <h3 id="kpiOtimista" class="text-3xl font-bold text-green-800 my-2">--</h3>
+                            <p class="text-sm text-green-700 font-medium">(A Nota de Corte Cai)</p>
+                        </div>
+                        <div class="bg-white rounded-xl shadow p-6 border border-red-200 bg-red-50 text-center flex flex-col justify-center">
+                            <p class="text-sm font-bold text-red-700 uppercase flex items-center justify-center gap-1">
+                                <i data-lucide="arrow-up-circle" class="w-4 h-4"></i> Cenário Pessimista
+                            </p>
+                            <h3 id="kpiPessimista" class="text-3xl font-bold text-red-800 my-2">--</h3>
+                            <p class="text-sm text-red-700 font-medium">(A Nota de Corte Sobe)</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow p-6 border border-slate-200">
+                        <div id="alertaTendencia" class="mb-6 p-4 rounded-lg text-lg font-bold text-center border"></div>
+                        <div class="relative h-[400px] md:h-[500px] w-full">
+                            <canvas id="graficoProjecao"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECÇÃO 2: MATRIZ DE QUADRANTES -->
+            <section id="matriz-estrategica" class="bg-slate-900 rounded-xl shadow-lg p-8 md:p-12 text-white relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-96 h-96 bg-blue-600 rounded-full mix-blend-multiply filter blur-[128px] opacity-30 pointer-events-none"></div>
+                <div class="relative z-10 mb-8">
+                    <h2 class="text-3xl font-extrabold mb-2">Matriz de Oportunidade e Risco</h2>
+                    <p class="text-slate-400 max-w-4xl text-lg">
+                        Mapeamento global do ecossistema IFES. <strong>Eixo X:</strong> Facilidade (Média Histórica). <strong>Eixo Y:</strong> Volatilidade (Desvio Padrão do Risco).
+                    </p>
+                </div>
+                
+                <div class="flex flex-col gap-8 relative z-10">
+                    <div class="bg-slate-800/80 backdrop-blur-sm border border-slate-700 rounded-xl p-4 h-[400px] w-full">
+                        <canvas id="scatterChart"></canvas>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                        <!-- Quadrante 1 -->
+                        <div class="bg-green-950/50 border border-green-500/30 rounded-xl p-5 flex flex-col h-[350px]">
+                            <h4 class="font-bold text-green-400 flex items-center gap-2 mb-2">
+                                <i data-lucide="shield-check" class="w-5 h-5"></i> Facilidade e Segurança
+                            </h4>
+                            <p class="text-xs text-green-200/70 mb-3 pb-2 border-b border-green-500/20">Corte baixo, variação baixa.</p>
+                            <ul id="listaQ1" class="space-y-2 overflow-y-auto pr-2 text-sm text-slate-300 dark-scrollbar flex-1"></ul>
+                        </div>
+                        
+                        <!-- Quadrante 2 -->
+                        <div class="bg-blue-950/50 border border-blue-500/30 rounded-xl p-5 flex flex-col h-[350px]">
+                            <h4 class="font-bold text-blue-400 flex items-center gap-2 mb-2">
+                                <i data-lucide="award" class="w-5 h-5"></i> Dificuldade e Segurança
+                            </h4>
+                            <p class="text-xs text-blue-200/70 mb-3 pb-2 border-b border-blue-500/20">Corte alto, mas previsível.</p>
+                            <ul id="listaQ2" class="space-y-2 overflow-y-auto pr-2 text-sm text-slate-300 dark-scrollbar flex-1"></ul>
+                        </div>
+
+                        <!-- Quadrante 3 -->
+                        <div class="bg-orange-950/50 border border-orange-500/30 rounded-xl p-5 flex flex-col h-[350px]">
+                            <h4 class="font-bold text-orange-400 flex items-center gap-2 mb-2">
+                                <i data-lucide="alert-circle" class="w-5 h-5"></i> Facilidade e Insegurança
+                            </h4>
+                            <p class="text-xs text-orange-200/70 mb-3 pb-2 border-b border-orange-500/20">Média baixa, mas com saltos surpresa.</p>
+                            <ul id="listaQ3" class="space-y-2 overflow-y-auto pr-2 text-sm text-slate-300 dark-scrollbar flex-1"></ul>
+                        </div>
+
+                        <!-- Quadrante 4 -->
+                        <div class="bg-red-950/50 border border-red-500/30 rounded-xl p-5 flex flex-col h-[350px]">
+                            <h4 class="font-bold text-red-400 flex items-center gap-2 mb-2">
+                                <i data-lucide="flame" class="w-5 h-5"></i> Dificuldade e Insegurança
+                            </h4>
+                            <p class="text-xs text-red-200/70 mb-3 pb-2 border-b border-red-500/20">Alta concorrência e alto risco.</p>
+                            <ul id="listaQ4" class="space-y-2 overflow-y-auto pr-2 text-sm text-slate-300 dark-scrollbar flex-1"></ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <script>
+        // Inicializa ícones
+        lucide.createIcons();
+
+        // ==========================================
+        // CONFIGURAÇÕES DE API (SUPABASE)
+        // ==========================================
+        const SUPABASE_URL = 'https://efandhnqvcukmvfsoeoz.supabase.co'; 
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmYW5kaG5xdmN1a212ZnNvZW96Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxNDYxNzMsImV4cCI6MjA4NzcyMjE3M30.pLWgHJW1cI0gQf_kuLuiF_S1IQZTaLWkzJy-VRE-GMk';
+        
+        const dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Variáveis globais do sistema baseadas no seu spa.html original
+        let dadosBrutos = [];
+        let chartInstance = null;
+        let scatterChartInstance = null;
+        let cursosPorCampus = {};
+
+        // Elementos UI
+        const selCamp = document.getElementById('campusSelect');
+        const selCurs = document.getElementById('cursoSelect');
+        const resCont = document.getElementById('resultadosContainer');
+        const loadingSection = document.getElementById('loadingSection');
+        const dashboardSection = document.getElementById('dashboardSection');
+
+        // ==========================================
+        // 1. CARREGAR DADOS DO SUPABASE
+        // ==========================================
+        async function fetchSupabaseData() {
+            try {
+                // Consulta à tabela oficial kpis_ifes
+                const { data, error } = await dbClient.from('kpis_ifes').select('*');
+                
+                if (error) throw error;
+                if (!data || data.length === 0) throw new Error("A tabela kpis_ifes está vazia.");
+
+                // Mapeia exatamente com os nomes de colunas que a sua matemática espera
+                dadosBrutos = data.map(row => ({
+                    ANO: row.ano,
+                    CAMPUS: row.campus,
+                    CURSO: row.curso,
+                    PONTO_DE_CORTE: row.ponto_de_corte // Lê a nota bruta exatamente como estava no CSV original
+                }));
+
+                // Sucesso
+                document.getElementById('db-status-dot').className = "w-2 h-2 rounded-full bg-green-400";
+                document.getElementById('db-status-text').innerText = "Banco de Dados Online";
+                
+                // Transição de tela
+                loadingSection.style.display = 'none';
+                dashboardSection.classList.remove('hidden');
+                
+                montarFiltros();
+                construirMatrizGlobal();
+
+            } catch (err) {
+                console.error("Erro Supabase:", err);
+                document.getElementById('db-status-dot').className = "w-2 h-2 rounded-full bg-red-500";
+                document.getElementById('db-status-text').innerText = "Erro DB: " + (err.message || "Falha na conexão");
+                loadingSection.innerHTML = `<h2 class="text-2xl text-red-600 font-bold">Erro de Conexão</h2><p>${err.message}</p>`;
+            }
+        }
+
+        // ==========================================
+        // LÓGICA EXATA DO SEU spa.html ORIGINAL
+        // ==========================================
+        function montarFiltros() {
+            let campi = new Set();
+            cursosPorCampus = {};
+
+            dadosBrutos.forEach(d => {
+                campi.add(d.CAMPUS);
+                if(!cursosPorCampus[d.CAMPUS]) {
+                    cursosPorCampus[d.CAMPUS] = new Set();
+                }
+                cursosPorCampus[d.CAMPUS].add(d.CURSO);
+            });
+
+            selCamp.innerHTML = '<option value="">Selecione o Campus...</option>';
+            Array.from(campi).sort().forEach(c => {
+                selCamp.innerHTML += `<option value="${c}">${c}</option>`;
+            });
+
+            selCamp.addEventListener('change', (e) => {
+                let campus = e.target.value;
+                selCurs.innerHTML = '<option value="">Selecione o Curso...</option>';
+                if(campus && cursosPorCampus[campus]) {
+                    Array.from(cursosPorCampus[campus]).sort().forEach(c => {
+                        selCurs.innerHTML += `<option value="${c}">${c}</option>`;
+                    });
+                }
+                resCont.classList.add('hidden');
+            });
+
+            selCurs.addEventListener('change', executarMatematica);
+        }
+
+        function executarMatematica() {
+            const campus = selCamp.value;
+            const curso = selCurs.value;
+            if(!campus || !curso) return;
+
+            let historico = dadosBrutos.filter(d => d.CAMPUS === campus && d.CURSO === curso).sort((a,b) => a.ANO - b.ANO);
+            if(historico.length === 0) return;
+
+            // Extração de Vetores X (Anos) e Y (Notas)
+            let X = historico.map(d => d.ANO);
+            let Y = historico.map(d => parseFloat(d.PONTO_DE_CORTE));
+            let n = X.length;
+
+            // Regressão Linear Simples (Mínimos Quadrados)
+            let sumX=0, sumY=0, sumXY=0, sumX2=0;
+            for(let i=0; i<n; i++) {
+                sumX += X[i]; 
+                sumY += Y[i];
+                sumXY += X[i]*Y[i]; 
+                sumX2 += X[i]*X[i];
+            }
+            
+            let inclinacao = n > 1 ? (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX) : 0;
+            let intercepto = n > 1 ? (sumY - inclinacao * sumX) / n : Y[0];
+            
+            let ano_futuro = 2026;
+            let previsao_2026 = (inclinacao * ano_futuro) + intercepto;
+
+            // Erro Padrão Residual e Intervalo de Confiança
+            let soma_erros_quadrados = 0;
+            for(let i=0; i<n; i++) {
+                let y_previsto = (inclinacao * X[i]) + intercepto;
+                soma_erros_quadrados += Math.pow(Y[i] - y_previsto, 2);
+            }
+            
+            let erro_padrao = n > 2 ? Math.sqrt(soma_erros_quadrados / (n - 2)) : 0;
+            let margem_erro = erro_padrao * 2.776; // T-Student original do seu spa.html
+
+            let nota_otimista = Math.max(0, previsao_2026 - margem_erro);
+            let nota_pessimista = previsao_2026 + margem_erro;
+
+            // Atualiza UI
+            document.getElementById('tituloAnalise').innerText = `Projeção: ${curso} - ${campus}`;
+            document.getElementById('kpiPrevisao').innerText = previsao_2026.toFixed(1);
+            document.getElementById('kpiOtimista').innerText = nota_otimista.toFixed(1);
+            document.getElementById('kpiPessimista').innerText = nota_pessimista.toFixed(1);
+
+            const alerta = document.getElementById('alertaTendencia');
+            if (inclinacao > 0) {
+                alerta.innerHTML = `<i data-lucide="trending-up" class="inline w-6 h-6 mr-2"></i> TENDÊNCIA DE ALTA (Subindo em média ${inclinacao.toFixed(1)} pontos/ano)`;
+                alerta.className = "mb-6 p-4 rounded-lg text-lg font-bold text-center border border-red-200 bg-red-50 text-red-700";
+            } else {
+                alerta.innerHTML = `<i data-lucide="trending-down" class="inline w-6 h-6 mr-2"></i> TENDÊNCIA DE BAIXA (Caindo em média ${Math.abs(inclinacao).toFixed(1)} pontos/ano)`;
+                alerta.className = "mb-6 p-4 rounded-lg text-lg font-bold text-center border border-green-200 bg-green-50 text-green-700";
+            }
+
+            lucide.createIcons();
+            resCont.classList.remove('hidden');
+
+            desenharGrafico(X, Y, inclinacao, intercepto, ano_futuro, previsao_2026, nota_otimista, nota_pessimista);
+        }
+
+        function desenharGrafico(X, Y, inclinacao, intercepto, ano_futuro, previsao_2026, otimista, pessimista) {
+            const ctx = document.getElementById('graficoProjecao').getContext('2d');
+            
+            let X_ext = [...X, ano_futuro];
+            let Y_tendencia = X_ext.map(x => (inclinacao * x) + intercepto);
+
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: X_ext,
+                    datasets: [
+                        {
+                            label: 'Histórico Real',
+                            data: [...Y, null],
+                            borderColor: '#2563eb',
+                            backgroundColor: '#2563eb',
+                            pointRadius: 6,
+                            borderWidth: 3,
+                            tension: 0
+                        },
+                        {
+                            label: 'Tendência Matemática (OLS)',
+                            data: Y_tendencia,
+                            borderColor: '#9ca3af',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            pointRadius: 0,
+                            fill: false,
+                            tension: 0
+                        },
+                        {
+                            label: 'Previsão 2026',
+                            data: [...Array(X.length).fill(null), previsao_2026],
+                            borderColor: '#dc2626',
+                            backgroundColor: '#dc2626',
+                            pointStyle: 'circle',
+                            pointRadius: 8,
+                            borderWidth: 0
+                        },
+                        {
+                            label: 'Margem Otimista',
+                            data: [...Array(X.length).fill(null), otimista],
+                            borderColor: '#16a34a',
+                            backgroundColor: '#16a34a',
+                            pointStyle: 'rectRounded',
+                            pointRadius: 6,
+                            borderWidth: 0
+                        },
+                        {
+                            label: 'Margem Pessimista',
+                            data: [...Array(X.length).fill(null), pessimista],
+                            borderColor: '#991b1b',
+                            backgroundColor: '#991b1b',
+                            pointStyle: 'rectRounded',
+                            pointRadius: 6,
+                            borderWidth: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    },
+                    scales: {
+                        y: { min: 0 }
+                    }
+                }
+            });
+        }
+
+        // Função exata do seu arquivo original
+        function calcularDesvioPadrao(valores) {
+            if(valores.length < 2) return 0;
+            const media = valores.reduce((a,b)=>a+b,0) / valores.length;
+            const variancia = valores.reduce((a,b)=>a + Math.pow(b-media,2),0) / (valores.length-1);
+            return Math.sqrt(variancia);
+        }
+
+        const paletaCores = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#22c55e', '#10b981', '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6', '#d946ef', '#f43f5e'];
+
+        function construirMatrizGlobal() {
+            const agrupamento = {};
+            let corPorCampus = {};
+            let corIdx = 0;
+
+            dadosBrutos.forEach(d => {
+                if(!d.CAMPUS || !d.CURSO || d.PONTO_DE_CORTE == null) return;
+                
+                if(!corPorCampus[d.CAMPUS]) {
+                    corPorCampus[d.CAMPUS] = paletaCores[corIdx % paletaCores.length];
+                    corIdx++;
+                }
+
+                const key = `${d.CAMPUS}::${d.CURSO}`;
+                if(!agrupamento[key]) {
+                    agrupamento[key] = { campus: d.CAMPUS, curso: d.CURSO, notas: [] };
+                }
+                agrupamento[key].notas.push(parseFloat(d.PONTO_DE_CORTE));
+            });
+
+            const matrizData = [];
+            Object.values(agrupamento).forEach(item => {
+                if(item.notas.length > 0) {
+                    const media = item.notas.reduce((a,b)=>a+b,0) / item.notas.length;
+                    const desvio = calcularDesvioPadrao(item.notas);
+                    matrizData.push({
+                        campus: item.campus,
+                        curso: item.curso,
+                        x: media,
+                        y: desvio
+                    });
+                }
+            });
+
+            const datasets = [];
+            Object.keys(corPorCampus).forEach(campus => {
+                const dadosCampus = matrizData.filter(d => d.campus === campus);
+                if(dadosCampus.length > 0) {
+                    datasets.push({
+                        label: campus,
+                        data: dadosCampus,
+                        backgroundColor: corPorCampus[campus] + '99',
+                        borderColor: corPorCampus[campus],
+                        pointRadius: 6,
+                        pointHoverRadius: 9
+                    });
+                }
+            });
+
+            const ctx = document.getElementById('scatterChart').getContext('2d');
+            if (scatterChartInstance) scatterChartInstance.destroy();
+
+            scatterChartInstance = new Chart(ctx, {
+                type: 'scatter',
+                data: { datasets: datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    color: '#94a3b8',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                            callbacks: {
+                                label: function(ctx) { return `${ctx.raw.curso} (${ctx.raw.campus})`; },
+                                afterLabel: function(ctx) { return `Média: ${ctx.raw.x.toFixed(1)} pts | Risco: ±${ctx.raw.y.toFixed(1)} pts`; }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: 'Facilidade (Média)', color: '#94a3b8' }, grid: { color: '#334155' } },
+                        y: { title: { display: true, text: 'Risco (Desvio Padrão)', color: '#94a3b8' }, grid: { color: '#334155' } }
+                    }
+                }
+            });
+
+            // Limites exatos do seu spa.html original
+            const LIMITE_FACILIDADE = 250.0;
+            const LIMITE_RISCO = 15.0;
+
+            const q1 = matrizData.filter(d => d.x < LIMITE_FACILIDADE && d.y < LIMITE_RISCO).sort((a,b) => a.x - b.x); 
+            const q2 = matrizData.filter(d => d.x >= LIMITE_FACILIDADE && d.y < LIMITE_RISCO).sort((a,b) => b.x - a.x); 
+            const q3 = matrizData.filter(d => d.x < LIMITE_FACILIDADE && d.y >= LIMITE_RISCO).sort((a,b) => b.y - a.y); 
+            const q4 = matrizData.filter(d => d.x >= LIMITE_FACILIDADE && d.y >= LIMITE_RISCO).sort((a,b) => b.y - a.y); 
+
+            const geraHTMLItem = (d, corTexto) => `
+                <li class="border-b border-white/10 pb-2 mb-2">
+                    <span class="font-bold text-white">${d.curso}</span> <br> 
+                    <span class="text-[11px] ${corTexto}">${d.campus} | Média: ${d.x.toFixed(0)} | ±${d.y.toFixed(1)}</span>
+                </li>`;
+
+            document.getElementById('listaQ1').innerHTML = q1.map(d => geraHTMLItem(d, 'text-green-300')).join('');
+            document.getElementById('listaQ2').innerHTML = q2.map(d => geraHTMLItem(d, 'text-blue-300')).join('');
+            document.getElementById('listaQ3').innerHTML = q3.map(d => geraHTMLItem(d, 'text-orange-300')).join('');
+            document.getElementById('listaQ4').innerHTML = q4.map(d => geraHTMLItem(d, 'text-red-300')).join('');
+        }
+
+        // INICIAR CONEXÃO AUTOMATICAMENTE
+        fetchSupabaseData();
+
+    </script>
+</body>
+</html>
