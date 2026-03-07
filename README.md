@@ -146,4 +146,4 @@ desde que **mantidos os devidos créditos ao autor original**.
 🎓 Instituição: Faculdade Descomplica  
 
 🔗 LinkedIn:  
-https://www.linkedin.com/in/davi-duarte-cucco/
+[https://www.linkedin.com/in/davi-duarte-cucco/](https://www.linkedin.com/in/davi-duarte-cucco-8b272a238/)
