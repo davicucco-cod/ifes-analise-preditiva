@@ -1,14 +1,14 @@
 # 📊 Sistema Preditivo e Matriz de Risco - IFES
 
-Este repositório contém o **código-fonte e a metodologia de Extração, Transformação e Carga (ETL)** desenvolvidos para o **Trabalho de Conclusão de Curso (TCC)**.
+Este repositório contém o **código-fonte e a metodologia de Extração, Transformação e Carga (ETL)** desenvolvidos para o **Trabalho de Conclusão de Curso (TCC)**.  
 
-O objetivo do projeto é **mitigar a assimetria informacional enfrentada por candidatos ao Instituto Federal do Espírito Santo (IFES)** através de **análise de dados e projeções estatísticas**, permitindo estimar notas de corte e identificar oportunidades estratégicas de candidatura.
+O objetivo do projeto é **mitigar a assimetria informacional enfrentada por candidatos ao Instituto Federal do Espírito Santo (IFES)** através de **análise de dados e projeções estatísticas**.
 
 ---
 
-# 🖥️ Demonstração Visual
+# 🖥 Demonstração Visual
 
-## 📈 Dashboard de Regressão Linear
+## 1. Dashboard de Regressão Linear
 
 <img width="998" height="823" alt="image" src="https://github.com/user-attachments/assets/d0412363-59ef-4b07-a9b0-706e69dbb8dd" />
 
@@ -20,7 +20,7 @@ O objetivo do projeto é **mitigar a assimetria informacional enfrentada por can
 
 ---
 
-## 🎯 Matriz de Oportunidade e Risco
+## 2. Matriz de Oportunidade e Risco
 
 <img width="991" height="829" alt="image" src="https://github.com/user-attachments/assets/0bbb2444-2794-4b58-bae3-98df8e8626be" />
 
@@ -31,45 +31,44 @@ O objetivo do projeto é **mitigar a assimetria informacional enfrentada por can
 ## Engenharia de Dados (ETL)
 
 - Python 3.10+
-- pandas (Manipulação e Data Wrangling)
-- pdfplumber / tabula-py (Extração de dados não estruturados)
-- psycopg2 (Conexão com PostgreSQL)
+- pandas *(Manipulação e Data Wrangling)*
+- pdfplumber / tabula-py *(Extração de dados não estruturados)*
+- psycopg2 *(Conexão com PostgreSQL)*
 
 ## Banco de Dados (Nuvem)
 
-- Supabase (BaaS PostgreSQL)
+- Supabase *(BaaS PostgreSQL)*
 
 ## Front-end (Aplicação Web)
 
-- HTML5
-- Vanilla JavaScript
-- Tailwind CSS
-- Chart.js
+- HTML5  
+- Vanilla JavaScript *(Lógica e Regressão Linear no cliente)*  
+- Tailwind CSS *(Estilização responsiva)*  
+- Chart.js *(Visualização de Dados e Matriz de Dispersão)*  
 
 ---
 
-# 🏗️ Arquitetura da Solução
+# 🏗 Arquitetura da Solução
 
-O projeto segue uma arquitetura **End-to-End**, dividida em três camadas principais.
+O projeto adota uma **arquitetura End-to-End**, dividida em três camadas principais.
 
-## 1️⃣ Data Pipeline (ETL em Python)
+## Data Pipeline (ETL em Python)
 
-- Extração de dados não estruturados de **dezenas de arquivos PDF oficiais** (editais de 2022 a 2025).
-- Limpeza e normalização utilizando **pandas** e **expressões regulares (regex)**.
-- Geração de uma **Tabela de Ouro** contendo KPIs normalizados para a **escala atual de 400 pontos**.
+- Extração de dados não estruturados de **dezenas de ficheiros PDF oficiais (editais de 2022 a 2025)**.
+- Limpeza e normalização (*Data Wrangling*) utilizando **pandas** e **Expressões Regulares (regex)**.
+- Geração de uma **"Tabela de Ouro"** contendo **KPIs de desempenho normalizados para a escala atual de 400 pontos**.
 
-## 2️⃣ Cloud Database (BaaS)
+## Cloud Database (BaaS)
 
-Os dados processados são enviados via script Python para um banco de dados relacional **PostgreSQL hospedado na plataforma Supabase**.
+Os dados higienizados são enviados via **script Python** para um banco de dados relacional **PostgreSQL** alojado na plataforma **Supabase**.
 
-## 3️⃣ Front-end Analítico (Single Page Application)
+## Front-end Analítico (Single Page Application)
 
-Interface web interativa que:
+Uma interface Web intuitiva que:
 
-- Consome dados via **API pública do Supabase**
-- Aplica **Regressão Linear Simples (OLS)** no lado do cliente
-- Utiliza **distribuição t de Student (95% de confiança)** para estimar margens de erro
-- Simula **cenários otimista e pessimista**
+- Consome os dados do **Supabase** via chamadas assíncronas
+- Aplica **algoritmos de Regressão Linear Simples (OLS)** no lado do cliente
+- Utiliza a **distribuição t de Student (95% de confiança)** para desenhar margens de erro realistas *(Cenários Otimista e Pessimista)*
 - Renderiza uma **Matriz Multifatorial de Risco vs Oportunidade**, agrupando cursos em **4 quadrantes estratégicos**
 
 ---
@@ -78,84 +77,65 @@ Interface web interativa que:
 
 ```
 📦 ifes-analise-preditiva
- ┣ README.md
- ┃  Documentação do projeto
- ┣ microdados_ifes.ipynb
- ┃  Scripts de extração e tratamento (ETL)
- ┗ index.html
-    Aplicação Web (Single Page Application)
+ ┣ 📜 microdados_ifes.ipynb   # Script de extração e tratamento (ETL) em Python
+ ┣ 📜 index.html              # Aplicação Web Front-end (Single Page Application)
+ ┗ 📜 README.md               # Documentação do projeto
 ```
 
 ---
 
-# 🚀 Como Visualizar o Simulador
+# 🚀 Como Visualizar o Simulador (Front-end)
 
-A aplicação é **100% serverless**, não sendo necessário servidor local.
+A componente visual do projeto é **totalmente Serverless**, não sendo necessário servidor local.
 
-## 1. Clone o repositório
-
-```bash
-git clone https://github.com/SEU_USUARIO/ifes-analise-preditiva.git
-```
-
-## 2. Acesse a pasta do projeto
+## 1. Faça o clone do repositório
 
 ```bash
-cd ifes-analise-preditiva
+git clone https://github.com/davicucco-cod/ifes-analise-preditiva.git
 ```
 
-## 3. Abra o simulador no navegador
+## 2. Abra o simulador
 
-Abra o arquivo **index.html** em qualquer navegador moderno:
+Abra o ficheiro **index.html** em qualquer navegador Web moderno:
 
-- Google Chrome  
-- Firefox  
-- Microsoft Edge  
+- Google Chrome
+- Firefox
+- Microsoft Edge
 
-A aplicação conectará automaticamente à **API pública de leitura do Supabase**.
+A aplicação ligar-se-á automaticamente à **API pública de leitura do Supabase**.
 
 ---
 
 # 📊 Fonte dos Dados
 
-Todos os dados utilizados neste projeto são **dados públicos**, provenientes dos:
-
-**Editais de Resultados Finais dos Processos Seletivos  
-Cursos Técnicos Integrados ao Ensino Médio**
-
-Publicados no portal oficial do **Instituto Federal do Espírito Santo (IFES)**.
+Todos os dados brutos processados neste projeto são **de domínio público**, originários dos **Editais de Resultados Finais dos Processos Seletivos (Cursos Técnicos Integrados ao Ensino Médio)** publicados anualmente no portal oficial do **Instituto Federal do Espírito Santo (IFES)**.
 
 ---
 
-# 🔬 Reprodutibilidade e Ciência Aberta
+# 📚 Reprodutibilidade e Ciência Aberta
 
-Este repositório foi disponibilizado com o objetivo de:
+A disponibilização deste código visa garantir **total transparência metodológica** e encorajar a **Pesquisa Reprodutível no âmbito académico**.
 
-- Garantir **transparência metodológica**
-- Promover **pesquisa reprodutível**
-- Permitir auditoria dos **métodos estatísticos utilizados**
+Todos os scripts matemáticos para o cálculo de:
 
-Os cálculos de:
+- desvio padrão
+- regressão linear
 
-- Desvio padrão
-- Regressão linear
-- Intervalos de confiança
-
-estão totalmente documentados e expostos no código do **front-end**.
+encontram-se **expostos, auditáveis e documentados no ficheiro Front-end**.
 
 ---
 
 # 📄 Licença
 
-Este projeto está licenciado sob a **Licença MIT**.
+Este projeto é disponibilizado sob a **Licença MIT**.
 
-Você pode:
+Sinta-se à vontade para:
 
-- Clonar
-- Modificar
-- Distribuir
+- clonar
+- modificar
+- distribuir
 
-Desde que **mantidos os créditos ao autor original**.
+desde que **mantidos os devidos créditos ao autor original**.
 
 ---
 
@@ -163,7 +143,7 @@ Desde que **mantidos os créditos ao autor original**.
 
 **Davi Duarte Cucco**
 
-🎓 Faculdade Descomplica  
+🎓 Instituição: Faculdade Descomplica  
 
-🔗 LinkedIn  
+🔗 LinkedIn:  
 https://www.linkedin.com/in/davi-duarte-cucco/
