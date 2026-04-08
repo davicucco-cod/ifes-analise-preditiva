@@ -1,6 +1,9 @@
 # 📊 Sistema Preditivo e Matriz de Risco - IFES
 
-Este repositório contém o **código-fonte e a metodologia de Extração, Transformação e Carga (ETL)** desenvolvidos para o **Trabalho de Conclusão de Curso (TCC)**.  
+Este repositório contém o **código-fonte e a metodologia de Extração, Transformação e Carga (ETL)** desenvolvidos para o **Estudo Independente**.  
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19464217.svg)](https://doi.org/10.5281/zenodo.19464217)
+
 
 O objetivo do projeto é **mitigar a assimetria informacional enfrentada por candidatos ao Instituto Federal do Espírito Santo (IFES)** através de **análise de dados e projeções estatísticas**.
 
@@ -114,28 +117,13 @@ Todos os dados brutos processados neste projeto são **de domínio público**, o
 
 # 📚 Reprodutibilidade e Ciência Aberta
 
-A disponibilização deste código visa garantir **total transparência metodológica** e encorajar a **Pesquisa Reprodutível no âmbito académico**.
-
-Todos os scripts matemáticos para o cálculo de:
-
-- desvio padrão
-- regressão linear
-
-encontram-se **expostos, auditáveis e documentados no ficheiro Front-end**.
+Todos os scripts matemáticos para o cálculo de desvio padrão, regressão linear e intervalos de confiança encontram-se expostos, auditáveis e documentados no ficheiro Front-end.
 
 ---
 
 # 📄 Licença
 
-Este projeto é disponibilizado sob a **Licença MIT**.
-
-Sinta-se à vontade para:
-
-- clonar
-- modificar
-- distribuir
-
-desde que **mantidos os devidos créditos ao autor original**.
+Este projeto é disponibilizado sob a Licença MIT. Sinta-se à vontade para clonar, modificar e distribuir, desde que mantidos os devidos créditos ao autor original.
 
 ---
 
